@@ -30,6 +30,10 @@
 
 #pragma mark -
 #pragma mark FetchTask
+- (void)main {
+    [self execute];
+}
+
 - (void)execute {
     /* Template Method for doing the task. */
     [self setup];
@@ -61,6 +65,8 @@
 - (void)tearDown {
     endTime_ = [NSDate timeIntervalSinceReferenceDate];
     duration_ = endTime_ - startTime_;
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"FetchTaskCompleted" object:nil];
 }
 
 @end

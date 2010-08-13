@@ -89,6 +89,10 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
 
     httpClient_ = [[httpClients_ objectAtIndex:0u] retain];
 
+    taskQueue_ = [[NSOperationQueue alloc] init];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskCompleted:) name:@"FetchTaskCompleted" object:nil];
+
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
@@ -111,6 +115,7 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
     [httpClient_ release];
     httpClient_ = client;
 
+    /* Reload the table rather than just the specific index path since the number of sections may change. */
     [[self tableView] reloadData];
 }
 
@@ -215,6 +220,7 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
     [cellStructures_ release];
     [httpClient_ release];
     [httpClients_ release];
+    [taskQueue_ release];
 
     [super dealloc];
 }
@@ -231,9 +237,18 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
 
     NSMutableArray *tasks = [[NSMutableArray alloc] initWithCapacity:10];
 
+    FetchTask *upstream = nil;
+
     for (NSInteger i = 0, n = 10; i < n; ++i) {
         FetchTask *task = [[implementationClass alloc] initWithURL:url];
-        [task execute];
+
+        if (upstream) {
+            [task addDependency:upstream];
+        }
+
+        upstream = task;
+
+        [taskQueue_ addOperation:task];
 
         [tasks addObject:task];
         [task release];
@@ -241,8 +256,6 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
 
     [httpClient_ setObject:tasks forKey:@"tasks"];
     [tasks release];
-
-    [[self tableView] reloadData];
 }
 
 - (UITableViewCell*)httpImplementationCell:(NSDictionary *)userInfo {
@@ -306,6 +319,15 @@ static NSString *intro = @"Select an HTTP client implementation and see how it p
     [cell setAccessoryType:UITableViewCellAccessoryDetailDisclosureButton]; // Tapping on this cell should show the response detail
 
     return cell;
+}
+
+- (void)taskCompleted:(NSNotification*)notification {
+    if (![NSThread isMainThread]) {
+        [self performSelectorOnMainThread:_cmd withObject:notification waitUntilDone:NO];
+        return;
+    }
+
+    [[self tableView] reloadData];
 }
 
 - (UITableViewCell*)urlCell:(NSDictionary *)userInfo {

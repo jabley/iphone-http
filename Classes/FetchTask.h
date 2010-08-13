@@ -11,7 +11,7 @@
 /**
  Interface defining a task to fetch a resource.
  */
-@interface FetchTask : NSObject {
+@interface FetchTask : NSOperation {
 
     NSURL *url_;
 

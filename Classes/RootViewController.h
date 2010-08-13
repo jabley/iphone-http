@@ -37,6 +37,8 @@
      Array of dictionaries describing cell / row creation logic.
      */
     NSArray *cellStructures_;
+
+    NSOperationQueue *taskQueue_;
 }
 
 /**
